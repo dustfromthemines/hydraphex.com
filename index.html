@@ -138,13 +138,14 @@ void main(){
     if(prog>0.&&prog<1.){
       vec2 ro=rp.xy;
       float dist=length(uv-ro);
-      float radius=prog*1.0;
+      float radius=prog*2.5;
       float ring=dist-radius;
       float wave=sin(ring*22.)*.012;
-      float falloff=exp(-ring*ring*8.)*smoothstep(0.,0.1,prog)*smoothstep(1.,0.7,prog);
-      float edgeFade=smoothstep(0.,.05,abs(ring))*exp(-abs(ring)*3.);
+      float envelope=exp(-ring*ring*1.5);
+      float fadeIn=smoothstep(0.,.08,prog);
+      float fadeOut=1.-prog*prog;
       vec2 dir=normalize(uv-ro+.0001);
-      d+=dir*wave*(falloff+edgeFade)*smoothstep(1.,.6,prog);
+      d+=dir*wave*envelope*fadeIn*fadeOut;
     }
   }
 
@@ -227,7 +228,7 @@ var rip1={x:0,y:0,start:0,active:false};
 var rip2={x:0,y:0,start:0,active:false};
 var lastRipple=0;
 var RIPPLE_INTERVAL=16000;
-var RIPPLE_DURATION=4000;
+var RIPPLE_DURATION=5000;
 
 function randEdge(){
   var side=Math.floor(Math.random()*4);
