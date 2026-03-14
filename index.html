@@ -74,6 +74,8 @@ varying vec2 v;
 uniform sampler2D tex;
 uniform float time;
 uniform vec2 mouse,res,ts;
+uniform vec3 ripple1;
+uniform vec3 ripple2;
 
 vec3 m3(vec3 x){return x-floor(x*(1./289.))*289.;}
 vec2 m2(vec2 x){return x-floor(x*(1./289.))*289.;}
@@ -128,6 +130,24 @@ void main(){
 
   vec2 d=vec2((n1+n3+n5)*.028,(n2+n4+n6)*.028)*breath;
   d+=mc*mi;
+
+  // Pebble ripples
+  for(int i=0;i<2;i++){
+    vec3 rp=i==0?ripple1:ripple2;
+    float prog=rp.z;
+    if(prog>0.&&prog<1.){
+      vec2 ro=rp.xy;
+      float dist=length(uv-ro);
+      float radius=prog*1.0;
+      float ring=dist-radius;
+      float wave=sin(ring*22.)*.012;
+      float falloff=exp(-ring*ring*8.)*smoothstep(0.,0.1,prog)*smoothstep(1.,0.7,prog);
+      float edgeFade=smoothstep(0.,.05,abs(ring))*exp(-abs(ring)*3.);
+      vec2 dir=normalize(uv-ro+.0001);
+      d+=dir*wave*(falloff+edgeFade)*smoothstep(1.,.6,prog);
+    }
+  }
+
   d*=lm;
 
   vec2 duv=clamp(cuv+d,.001,.999);
@@ -172,6 +192,8 @@ var uM=gl.getUniformLocation(pr,"mouse");
 var uR=gl.getUniformLocation(pr,"res");
 var uX=gl.getUniformLocation(pr,"tex");
 var uS=gl.getUniformLocation(pr,"ts");
+var uR1=gl.getUniformLocation(pr,"ripple1");
+var uR2=gl.getUniformLocation(pr,"ripple2");
 
 var tx=gl.createTexture();
 gl.bindTexture(gl.TEXTURE_2D,tx);
@@ -200,13 +222,49 @@ function resize(){
 window.addEventListener("resize",resize);
 resize();
 
+// Ripple state
+var rip1={x:0,y:0,start:0,active:false};
+var rip2={x:0,y:0,start:0,active:false};
+var lastRipple=0;
+var RIPPLE_INTERVAL=16000;
+var RIPPLE_DURATION=4000;
+
+function randEdge(){
+  var side=Math.floor(Math.random()*4);
+  if(side===0) return {x:Math.random(),y:-0.05};
+  if(side===1) return {x:Math.random(),y:1.05};
+  if(side===2) return {x:-0.05,y:Math.random()};
+  return {x:1.05,y:Math.random()};
+}
+
+function triggerRipples(now){
+  var p1=randEdge();
+  rip1.x=p1.x;rip1.y=p1.y;rip1.start=now;rip1.active=true;
+  setTimeout(function(){
+    var p2={x:p1.x+(Math.random()-.5)*.15,y:p1.y+(Math.random()-.5)*.15};
+    rip2.x=p2.x;rip2.y=p2.y;rip2.start=performance.now();rip2.active=true;
+  },400);
+}
+
 function render(){
+  var now=performance.now();
+  if(now-lastRipple>RIPPLE_INTERVAL){
+    lastRipple=now;
+    triggerRipples(now);
+  }
+  var r1p=rip1.active?Math.min((now-rip1.start)/RIPPLE_DURATION,1.):0.;
+  var r2p=rip2.active?Math.min((now-rip2.start)/RIPPLE_DURATION,1.):0.;
+  if(r1p>=1.)rip1.active=false;
+  if(r2p>=1.)rip2.active=false;
+
   mouseX+=(mx-mouseX)*.02;
   mouseY+=(my-mouseY)*.02;
-  gl.uniform1f(uT,performance.now()*.001);
+  gl.uniform1f(uT,now*.001);
   gl.uniform2f(uM,mouseX,mouseY);
   gl.uniform2f(uR,canvas.width,canvas.height);
   gl.uniform2f(uS,texW,texH);
+  gl.uniform3f(uR1,rip1.x,rip1.y,rip1.active?r1p:0.);
+  gl.uniform3f(uR2,rip2.x,rip2.y,rip2.active?r2p:0.);
   gl.uniform1i(uX,0);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   requestAnimationFrame(render);
