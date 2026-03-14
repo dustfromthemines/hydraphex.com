@@ -67,7 +67,8 @@ void main(){
     cuv.x=uv.x*s+(1.-s)*.5;
   }
 
-  float t=time*.3;
+  float t=time*.15;
+  float breath=.7+.3*sin(time*1.0);
   vec2 mc=mouse-uv;
   float md=length(mc);
   float mi=smoothstep(.5,0.,md)*.015;
@@ -84,15 +85,15 @@ void main(){
   float mask=smoothstep(.12,.35,ld);
   float lm=mix(.05,1.,mask);
 
-  vec2 d=vec2((n1+n3+n5)*.028,(n2+n4+n6)*.028);
+  vec2 d=vec2((n1+n3+n5)*.028,(n2+n4+n6)*.028)*breath;
   d+=mc*mi;
   d*=lm;
 
   vec2 duv=clamp(cuv+d,.001,.999);
   vec4 c=texture2D(tex,duv);
 
-  float c1=sn(vec2(uv.x*5.+t*.8,uv.y*5.-t*.6));
-  float c2=sn(vec2(uv.x*7.-t*.7,uv.y*6.+t*.9));
+  float c1=sn(vec2(uv.x*5.+t*.8,uv.y*5.-t*.6))*breath;
+  float c2=sn(vec2(uv.x*7.-t*.7,uv.y*6.+t*.9))*breath;
   float cp=pow(abs(c1+c2)*.5,2.);
 
   c.rgb=mix(c.rgb,c.rgb*vec3(.7,.85,1.),.15*mask);
@@ -159,8 +160,8 @@ window.addEventListener("resize",resize);
 resize();
 
 function render(){
-  mouseX+=(mx-mouseX)*.03;
-  mouseY+=(my-mouseY)*.03;
+  mouseX+=(mx-mouseX)*.02;
+  mouseY+=(my-mouseY)*.02;
   gl.uniform1f(uT,performance.now()*.001);
   gl.uniform2f(uM,mouseX,mouseY);
   gl.uniform2f(uR,canvas.width,canvas.height);
