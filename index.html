@@ -138,14 +138,15 @@ void main(){
     if(prog>0.&&prog<1.){
       vec2 ro=rp.xy;
       float dist=length(uv-ro);
-      float radius=prog*2.5;
+      float radius=prog*prog*2.8;
       float ring=dist-radius;
-      float wave=sin(ring*22.)*.012;
-      float envelope=exp(-ring*ring*1.5);
-      float fadeIn=smoothstep(0.,.08,prog);
-      float fadeOut=1.-prog*prog;
+      float wave=sin(ring*12.-.5)*0.008;
+      float trailing=sin(ring*8.+1.)*0.004;
+      float envelope=exp(-abs(ring)*4.)*smoothstep(-.02,.04,ring*-1.+.15);
+      float trailEnv=exp(-abs(ring+.08)*3.);
+      float life=smoothstep(0.,.15,prog)*(1.-prog*prog*prog);
       vec2 dir=normalize(uv-ro+.0001);
-      d+=dir*wave*envelope*fadeIn*fadeOut;
+      d+=dir*(wave*envelope+trailing*trailEnv)*life;
     }
   }
 
@@ -228,7 +229,7 @@ var rip1={x:0,y:0,start:0,active:false};
 var rip2={x:0,y:0,start:0,active:false};
 var lastRipple=0;
 var RIPPLE_INTERVAL=16000;
-var RIPPLE_DURATION=5000;
+var RIPPLE_DURATION=7000;
 
 function randEdge(){
   var side=Math.floor(Math.random()*4);
@@ -244,7 +245,7 @@ function triggerRipples(now){
   setTimeout(function(){
     var p2={x:p1.x+(Math.random()-.5)*.15,y:p1.y+(Math.random()-.5)*.15};
     rip2.x=p2.x;rip2.y=p2.y;rip2.start=performance.now();rip2.active=true;
-  },400);
+  },800);
 }
 
 function render(){
