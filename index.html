@@ -67,7 +67,7 @@ var mouseX=0.5,mouseY=0.5,mx=0.5,my=0.5,texW=1,texH=1;
 document.addEventListener("mousemove",function(e){mx=e.clientX/window.innerWidth;my=e.clientY/window.innerHeight});
 document.addEventListener("touchmove",function(e){mx=e.touches[0].clientX/window.innerWidth;my=e.touches[0].clientY/window.innerHeight},{passive:true});
 
-var VS="attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0,1);}";
+var VS="attribute vec2 p;varying vec2 v;void main(){v=vec2(p.x*.5+.5,1.-(p.y*.5+.5));gl_Position=vec4(p,0,1);}";
 
 var FS=`precision highp float;
 varying vec2 v;
